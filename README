@@ -1,0 +1,70 @@
+All files in InputFiles derived from:
+C:\Users\ckirkman\Dropbox (IDM)\eSwatini_calibration_AAkullian_JAN2019\Templates
+
+Notes in Data\calibration_ingest_form-Swaziland_ART_vars--UPDATED on each sheet indicates
+which file the data was derived from + any other updates.
+
+optim_script.py derived from
+C:\Users\ckirkman\Dropbox (IDM)\EMOD HIV User Group Shared Folder\EMOD_eswatini\Calibration\Scripts\optim_Swaziland_ART_vars.py
+Updated to work with latest HIV-Analyzers/DTK-tools
+
+Original base_population_scale_factor is unknown to me. I have the value set in optim_script.py to a fast, testing-only value. We should use the original calibration/scenario value used by Adam.
+
+
+Attempt at a vignette
+
+scenario == campaign file applied to a set of N parameterizations -> N simulations
+
+if we have the calibration directory with the full set of files from the calibration, we could resample from it instead of using provide parameterizations. It would use whatever was in the calibration dir. But I think we don't have that
+
+The ingest form is used to drive a calibration and provide some parameter name mapping.
+the ingest form is always used for optim_script.py and run_scenarios.py (by extension, as it uses optim_script.py as a module). Other disease teams don't have an ingest form; it was developed originally for the HIV team.
+
+ReEvaluatedLikelihood_full_MASTER_new.csv is a csv file of the parameters that were used to fill the template input files for the runs that generated the file
+ReEvaluatedLikelihood_full_MASTER_new.csv is the output of a scenario run, which is NOT calibration
+ReEvaluatedLikelihood_full_MASTER_new.csv would be the input to a scenario run
+
+it would be the selection of calibrated parameter sets, derived originally from parameters mentioned in the ingest form
+
+The equivalent of ReEvaluatedLikelihood...csv is created by run_scenarios.py . So if you want to run new scenarios later, you can make sure to use the exact parameterizations as used with prior scenarios.
+
+
+
+
+    In a sane world, recalibrating and selecting a new set of parameterizations via roulette to run scenarios (including Adam's scenario for intercomparison) should yield results that are statistically no different from the original calibration/scenarios he did. The only difference would be 1) newer binary shifting things a bit, 2) slightly different parameterizations due to randomness in exploration of parameter space in second calibration
+
+    I am happy to do that... So, then I need Adam's config and campaign and demographics files, and just need to do a recalibration using the updated binary, right?
+
+    no need. All we need is a starting point for calibration and min/max ranges for the parameters, all defined in the model parameters sheet of the ingest form
+
+    A good starting point may well be the best-looking sim from the parameterizations csv file of Adams. It won't be "right" anymore, but it should be close-ish.
+
+Calibration is driven by the ingest form. Scenarios are driven by parameterizations. They can be derived by roulette from a calibration directory or a csv of pre-defined parameterizations (likely derived from a calibration, but can be anything)
+
+For a new calibration where you do not have parameterizations picked from it already (first scenario runs), you will want to roulette sample from a (new) calibration directory. So it would be like:
+python run_scenarios.py -d CALIB_DIR -c optim_script.py -m roulette -n N -o OUTPUT_DIR -s MEANINGFUL_SCENARIO_SET_NAME --table scenarios.csv
+
+python run_scenarios.py -h
+
+-id only downloads results, and is only used if something breaks down in the process between simulation running and simulation downloading (e.g. you close your laptop and the sims finish correctly, but run_scenarios.py will no longer be waiting to download the data)
+
+-f is only if there are files to download other than ReportHIVByAgeAndGender.csv files, e.g. results from other reporters (not usually used)
+
+-b is not usually needed, unless you are not located at IDM, then you use it all the time
+
+
+sample from hiv example directory:
+ 
+python ../../scripts/run_scenarios.py -d Nyanza--0.005--rep2--test1 -c optim_script.py -m roulette -n 6 -o example-output -s Example-scenarios --table scenarios.csv
+
+-d Nyanza--0.005--rep2--test1 is just an example calibration directory
+the run script (python ../../scripts/run_scenarios.py -d Nyanza--0.005--rep2--test1 -c optim_script.py -m roulette -n 6 -o example-output -s Example-scenarios --table scenarios.csv) needs the "-d Nyanza...", and optim_script.py will make a directory in the project directory with that name
+
+
+[12:46 PM] Clark Kirkman
+    
+have you created a calibration in directory Eswatini.test1 via optim_script.py?
+​[12:48 PM] Clark Kirkman
+    try running optim_script.py for say, 2 iterations, 20 samples per iteration at the very low currently specified base pop sampling rate.
+​[12:49 PM] Clark Kirkman
+    It will create a new calibration directory. Then when it is done, feed that directory name in as the -d DIR argument of run_scenarios.py
